@@ -36,15 +36,3 @@ const GOOGLE_REVIEWS = {
   async function loadLive() {
     if (!GOOGLE_REVIEWS.placeId || !GOOGLE_REVIEWS.apiKey) return;
     try {
-      const r = await fetch('https://places.googleapis.com/v1/places/' + encodeURIComponent(GOOGLE_REVIEWS.placeId) +
-        '?fields=rating,userRatingCount&key=' + encodeURIComponent(GOOGLE_REVIEWS.apiKey));
-      if (!r.ok) return;
-      const j = await r.json();
-      if (j.rating) { data.rating = j.rating; data.count = j.userRatingCount || 0; render(); }
-    } catch (e) { /* garde les valeurs statiques */ }
-  }
-
-  render();
-  loadLive();
-  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-})();
