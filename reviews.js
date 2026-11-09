@@ -36,3 +36,29 @@ const GOOGLE_REVIEWS = {
   async function loadLive() {
     if (!GOOGLE_REVIEWS.placeId || !GOOGLE_REVIEWS.apiKey) return;
     try {
+      const r = await fetch('https://places.googleapis.com/v1/places/' + encodeURIComponent(GOOGLE_REVIEWS.placeId) +
+        '?fields=rating,userRatingCount&key=' + encodeURIComponent(GOOGLE_REVIEWS.apiKey));
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j.rating) { data.rating = j.rating; data.count = j.userRatingCount || 0; render(); }
+    } catch (e) { /* garde les valeurs statiques */ }
+  }
+
+  render();
+  loadLive();
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+  const RV = {
+    fr: ['AVIS CLIENTS', 'Ils ont roulé<br>avec <em>nous.</em>'],
+    en: ['CUSTOMER REVIEWS', 'They rode<br>with <em>us.</em>'],
+    es: ['OPINIONES', 'Ya rodaron<br>con <em>nosotros.</em>']
+  };
+  function renderSection() {
+    const lang = RV[document.documentElement.lang] ? document.documentElement.lang : 'fr';
+    const e = document.getElementById('rvEyebrow'), t = document.getElementById('rvTitle');
+    if (e) e.textContent = RV[lang][0];
+    if (t) t.innerHTML = RV[lang][1];
+  }
+  renderSection();
+  new MutationObserver(renderSection).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+})();
