@@ -150,3 +150,11 @@
 .hero .g-score{font-size:15px;color:#fff}
 .hero .g-label{overflow:hidden;text-overflow:ellipsis}
 @media(max-width:760px){.hero .g-reviews{font-size:12px;gap:8px;padding-right:14px}.hero .g-stars{font-size:13px}}
+.reviews-section{padding:90px 0}
+.reviews-section .section-heading{display:block;margin-bottom:37px}
+.reviews-section .section-heading h2 em{color:var(--gold)}
+@media(max-width:760px){.reviews-section{padding:60px 0}}
+.reviews-section{position:relative;z-index:1;overflow:hidden;clear:both}
+.reviews-section>.shell{opacity:1!important;transform:none!important}
+.reviews-section [class*="elfsight-app"]{display:block;width:100%;min-height:220px;position:relative}
+.hero .g-reviews{margin:0}
