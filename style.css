@@ -142,3 +142,11 @@
   .hero-meta{margin-top:30px}
 }
 .contact-item a .maps-icon{display:inline-block;width:22px;height:22px;margin-left:8px;vertical-align:middle;object-fit:contain}
+
+.hero .g-reviews{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:8px 20px 8px 8px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(6px);color:#f3f5f7;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;transition:background .2s}
+.hero .g-reviews:hover{background:rgba(255,255,255,.22)}
+.hero .g-reviews img{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:#fff;padding:4px;object-fit:contain}
+.hero .g-stars{color:#fbbc04;letter-spacing:1px;font-size:15px;line-height:1}
+.hero .g-score{font-size:15px;color:#fff}
+.hero .g-label{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){.hero .g-reviews{font-size:12px;gap:8px;padding-right:14px}.hero .g-stars{font-size:13px}}
