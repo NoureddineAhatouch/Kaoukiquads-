@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة التحكم — Kaouki Quad</title>
+<link rel="icon" href="favicon.png">
+<style>
+:root{--forest:#26372f;--gold:#c9953d;--cream:#fbf8f1;--ink:#26352d;--muted:#7a877f;--line:#e3dccb;--red:#b3402f;--ok:#2f7a4f}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:var(--cream);color:var(--ink);line-height:1.6}
+button,input,textarea,select{font:inherit}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+.login .card{width:100%;max-width:360px}
+h1,h2,h3{margin:0 0 12px}h1{font-size:20px}h2{font-size:18px}h3{font-size:15px;color:var(--forest)}
+input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input[type=checkbox]{width:auto}input[type=color]{padding:2px;height:42px}
+textarea{min-height:70px;resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+.btn{border:0;border-radius:8px;padding:10px 16px;background:var(--forest);color:#fff;cursor:pointer;font-weight:600}
+.btn.gold{background:var(--gold)}.btn.ghost{background:#fff;color:var(--forest);border:1px solid var(--line)}.btn.red{background:var(--red)}.btn.sm{padding:6px 10px;font-size:13px}
+header{position:sticky;top:0;z-index:5;background:var(--forest);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header strong{flex:1;min-width:120px}
+header a{color:#fff;font-size:14px}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:56px;z-index:4}
+nav.tabs button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;cursor:pointer}
+nav.tabs button.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+main{max-width:900px;margin:0 auto;padding:14px}
+.panel{display:none}.panel.on{display:block}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center;margin:10px 0;color:var(--ink);font-size:14px}
+.stack>*+*{margin-top:12px}
+.img-slot img{width:100%;height:130px;object-fit:cover;border-radius:8px;background:#eee;display:block;margin-bottom:8px}
+.img-slot .row{gap:6px}
+.group{margin-top:14px}.group>summary{cursor:pointer;font-weight:700;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.group[open]>summary{border-radius:8px 8px 0 0}
+.group .body{border:1px solid var(--line);border-top:0;border-radius:0 0 8px 8px;padding:4px 12px 12px;background:#fff}
+.key{font-size:11px;color:var(--muted);direction:ltr;text-align:left}
+.ltr{direction:ltr;text-align:left}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--forest);color:#fff;padding:10px 18px;border-radius:8px;display:none;z-index:9;max-width:90%}
+#toast.err{background:var(--red)}
+.dirty{color:#ffd77a;font-size:13px;display:none}
+.hint{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <strong>لوحة التحكم</strong>
+  <span class="dirty" id="dirty">● تغييرات غير محفوظة</span>
+  <a href="index.html" target="_blank" rel="noopener">عرض الموقع ↗</a>
+  <button class="btn gold sm" id="saveBtn">حفظ ⬇</button>
+</header>
+<nav class="tabs" id="tabs"></nav>
+<main>
+  <section class="panel" id="p-general"></section>
+  <section class="panel" id="p-tours"></section>
+  <section class="panel" id="p-images"></section>
+  <section class="panel" id="p-texts"></section>
+  <section class="panel" id="p-export"></section>
+</main>
+</div>
+<div id="toast"></div>
+
+<script src="translations.js"></script>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let content = { contact: {}, settings: {}, theme: {}, tours: [{}, {}, {}, {}], prices: [{}, {}, {}, {}], images: {}, texts: {} };
+let edited = {};
+let dirty = false, textLang = 'fr', filter = '';
+
+const defaultPrices = [{ solo: 300, duo: 450 }, { solo: 550, duo: 750 }, { solo: 800, duo: 1000 }, { solo: 1300, duo: 1550 }];
+const defaultContact = { phone: '+212 623 873 731', whatsapp: '212623873731', mapUrl: 'https://maps.app.goo.gl/iBVomJNrNbHqiwG56', instagram: 'https://www.instagram.com/', open: '09:00', close: '19:00' };
+const slots = [
+  ['hero', 'صورة الغلاف الرئيسية', 'hero.jpg'], ['banner', 'صورة قسم الحجز', 'gallery-6.jpg'],
+  ['tour1', 'جولة 1 — Balade Plage', 'tour-1.jpg'], ['tour2', 'جولة 2 — Cap Sim', 'tour-2.jpg'], ['tour3', 'جولة 3 — Sunset', 'tour-3.jpg'], ['tour4', 'جولة 4 — Raid Iftane', 'gallery-5.jpg'],
+  ['g1', 'المعرض 1', 'gallery-1.jpg'], ['g2', 'المعرض 2', 'gallery-2.jpg'], ['g3', 'المعرض 3', 'gallery-3.jpg'], ['g4', 'المعرض 4', 'gallery-4.jpg'], ['g5', 'المعرض 5', 'gallery-5.jpg'], ['g6', 'المعرض 6', 'gallery-6.jpg'],
+  ['logo', 'الشعار', 'logo-desktop.png']
+];
+const tourNames = ['Balade Plage', "Cap Sim & Sidi M'Barek", 'Sunset Trip', 'Raid Iftane'];
+
+function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = 'none'), 3200); }
+function setDirty(v = true) { dirty = v; $('#dirty').style.display = v ? 'inline' : 'none'; if (v) clearTimeout(setDirty.t), setDirty.t = setTimeout(() => safeLS.set(draftKey, JSON.stringify(buildOutput())), 600); }
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+const draftKey = 'kq-admin-draft';
+const safeLS = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+async function start() {
+  let c = {};
+  try { const r = await fetch('content.json?' + Date.now(), { cache: 'no-store' }); if (r.ok) c = await r.json(); } catch {}
+  const draft = safeLS.get(draftKey);
+  if (draft && confirm('وُجدت تعديلات غير مصدّرة من المرة السابقة. هل تريد استعادتها؟')) { try { c = JSON.parse(draft); } catch {} }
+  load(c); buildTabs(); renderAll(); setDirty(false);
+}
+function load(c) {
+  content = { contact: {}, settings: {}, theme: {}, tours: [{}, {}, {}, {}], prices: [{}, {}, {}, {}], images: {}, texts: {}, ...c };
+  ['fr', 'en', 'es'].forEach((l) => (edited[l] = merge(siteTranslations[l], content.texts?.[l])));
+}
+function buildOutput() {
+  const out = clone(content); out.texts = {};
+  ['fr', 'en', 'es'].forEach((l) => { const d = diff(siteTranslations[l], edited[l]); if (d) out.texts[l] = d; });
+  ['contact', 'settings', 'theme'].forEach((k) => Object.keys(out[k]).forEach((x) => (out[k][x] === '' || out[k][x] === undefined) && delete out[k][x]));
+  return out;
+}
+
+/* ---------- helpers for texts ---------- */
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function merge(base, extra) { if (extra == null) return clone(base); if (Array.isArray(base) || typeof base !== 'object' || typeof extra !== 'object') return clone(extra); const o = clone(base); Object.keys(extra).forEach((k) => (o[k] = merge(base[k], extra[k]))); return o; }
+function diff(base, cur) {
+  if (JSON.stringify(base) === JSON.stringify(cur)) return undefined;
+  if (Array.isArray(cur) || typeof cur !== 'object') return cur;
+  const o = {}; Object.keys(cur).forEach((k) => { const d = diff(base?.[k], cur[k]); if (d !== undefined) o[k] = d; }); return o;
+}
+
+/* ---------- tabs ---------- */
+const tabs = [['general', 'عام والتواصل'], ['tours', 'الجولات والأسعار'], ['images', 'الصور'], ['texts', 'النصوص'], ['export', 'حفظ وتصدير']];
+function buildTabs() {
+  const nav = $('#tabs'); nav.innerHTML = '';
+  tabs.forEach(([id, label], i) => { const b = el(`<button>${label}</button>`); b.onclick = () => show(id); b.dataset.id = id; nav.append(b); if (i === 0) show(id); });
+}
+function show(id) { document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.id === 'p-' + id)); document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.id === id)); }
+function renderAll() { renderGeneral(); renderTours(); renderImages(); renderTexts(); renderExport(); }
+
+/* ---------- general ---------- */
+function bindInput(node, obj, key, num) { node.oninput = () => { obj[key] = node.type === 'checkbox' ? node.checked : num ? (node.value === '' ? undefined : Number(node.value)) : node.value; setDirty(); }; }
+function renderGeneral() {
+  const p = $('#p-general'); const c = content.contact, s = content.settings, th = content.theme;
+  p.innerHTML = `<div class="card stack"><h2>معلومات التواصل</h2><div class="grid">
+    <div><label>رقم الهاتف (يظهر في الأعلى)</label><input class="ltr" data-k="phone" value="${esc(c.phone ?? defaultContact.phone)}"></div>
+    <div><label>رقم واتساب (بدون + أو مسافات)</label><input class="ltr" data-k="whatsapp" value="${esc(c.whatsapp ?? defaultContact.whatsapp)}"></div>
+    <div><label>رابط الخريطة</label><input class="ltr" data-k="mapUrl" value="${esc(c.mapUrl ?? defaultContact.mapUrl)}"></div>
+    <div><label>رابط إنستغرام</label><input class="ltr" data-k="instagram" value="${esc(c.instagram ?? defaultContact.instagram)}"></div>
+    <div><label>بداية العمل</label><input type="time" data-k="open" value="${c.open ?? defaultContact.open}"></div>
+    <div><label>نهاية العمل</label><input type="time" data-k="close" value="${c.close ?? defaultContact.close}"></div></div></div>
+    <div class="card stack" style="margin-top:12px"><h2>المظهر والإعدادات</h2><div class="grid">
+    <div><label>اللون الذهبي</label><input type="color" data-t="gold" value="${th.gold || '#c9953d'}"></div>
+    <div><label>اللون الأخضر الداكن</label><input type="color" data-t="forest" value="${th.forest || '#26372f'}"></div></div>
+    <label class="chk"><input type="checkbox" id="fw" ${s.floatingWhatsapp === false ? '' : 'checked'}> إظهار زر واتساب العائم</label>
+    <button class="btn ghost sm" id="resetTheme">استعادة الألوان الافتراضية</button></div>`;
+  p.querySelectorAll('[data-k]').forEach((n) => bindInput(n, content.contact, n.dataset.k));
+  p.querySelectorAll('[data-t]').forEach((n) => bindInput(n, content.theme, n.dataset.t));
+  bindInput($('#fw'), content.settings, 'floatingWhatsapp');
+  $('#resetTheme').onclick = () => { content.theme = {}; setDirty(); renderGeneral(); };
+}
+
+/* ---------- tours & prices ---------- */
+function renderTours() {
+  const p = $('#p-tours'); p.innerHTML = '<p class="hint">الأسعار بالدرهم (DH) لكل دراجة. إخفاء جولة يحذفها من الأسعار والتفاصيل ونموذج الحجز. لتعديل أسماء الجولات ووصفها انتقل إلى تبويب «النصوص».</p>';
+  tourNames.forEach((name, i) => {
+    const pr = content.prices[i] ??= {}, t = content.tours[i] ??= {};
+    const card = el(`<div class="card stack" style="margin-bottom:12px"><h3>${i + 1}. ${esc(name)}</h3><div class="grid">
+      <div><label>سعر الفرد (Solo)</label><input type="number" min="0" step="10" class="ltr" value="${pr.solo ?? defaultPrices[i].solo}"></div>
+      <div><label>سعر راكبين (Duo)</label><input type="number" min="0" step="10" class="ltr" value="${pr.duo ?? defaultPrices[i].duo}"></div></div>
+      <label class="chk"><input type="checkbox" ${t.visible === false ? '' : 'checked'}> إظهار هذه الجولة في الموقع</label></div>`);
+    const [a, b] = card.querySelectorAll('input[type=number]'); bindInput(a, pr, 'solo', true); bindInput(b, pr, 'duo', true); bindInput(card.querySelector('[type=checkbox]'), t, 'visible');
+    p.append(card);
+  });
+}
+
+/* ---------- images ---------- */
+function resizeToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const png = file.type === 'image/png' && img.width <= 600, max = png ? 600 : 1100, k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      resolve(png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.7));
+    };
+    img.onerror = () => reject(new Error('تعذّر قراءة الصورة')); img.src = url;
+  });
+}
+function renderImages() {
+  const p = $('#p-images'); p.innerHTML = '<p class="hint">اختر صورة من هاتفك وسيتم تصغيرها وضغطها تلقائيًا وتضمينها داخل content.json. كل صورة تزيد حجم الملف قليلًا (≈100–200 KB).</p><div class="grid" id="imgGrid"></div>';
+  slots.forEach(([id, label, def]) => {
+    const cur = content.images[id] || def;
+    const card = el(`<div class="card img-slot"><img src="${esc(cur)}" alt=""><h3>${label}</h3><div class="row"><label class="btn sm gold" style="margin:0;color:#fff">تغيير<input type="file" accept="image/*" hidden></label><button class="btn sm ghost">الافتراضية</button></div></div>`);
+    card.querySelector('input').onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try { toast('جاري التجهيز…'); const url = await resizeToDataUrl(f); content.images[id] = url; card.querySelector('img').src = url; setDirty(); toast('تم ✔ — لا تنس «حفظ»'); }
+      catch (err) { toast(err.message, true); }
+    };
+    card.querySelector('button').onclick = () => { delete content.images[id]; card.querySelector('img').src = def; setDirty(); };
+    $('#imgGrid').append(card);
+  });
+}
+
+/* ---------- texts ---------- */
+const groups = [[/^nav|^book$/, 'القائمة العلوية'], [/^hero/, 'الواجهة الرئيسية'], [/^intro/, 'المقدمة'], [/^pricing|^p\d|^solo|^duo|^most|^priceLink|^priceNote/, 'الأسعار وبطاقات الجولات'], [/^routes|^r\d|^routeLink|^routeItems/, 'تفاصيل الجولات'], [/^photo/, 'معرض الصور'], [/^included|^needItems/, 'ما يشمله السعر'], [/^faq/, 'الأسئلة الشائعة'], [/^banner/, 'شريط الحجز'], [/^reservation|^form|^name|^adults|^children|^date|^time|^plan|^choose/, 'نموذج الحجز'], [/^booking/, 'رسالة واتساب'], [/^contact|^whatsapp|^location|^hours/, 'التواصل'], [/^footer/, 'التذييل']];
+const groupOf = (k) => (groups.find(([re]) => re.test(k)) || [0, 'أخرى'])[1];
+function leaves(obj, path = []) { return Object.entries(obj).flatMap(([k, v]) => (v && typeof v === 'object' ? leaves(v, [...path, k]) : [[[...path, k], v]])); }
+function setPath(obj, path, val) { path.slice(0, -1).reduce((o, k) => o[k], obj)[path.at(-1)] = val; }
+function renderTexts() {
+  const p = $('#p-texts');
+  p.innerHTML = `<div class="card"><div class="row"><select id="langSel" style="width:auto"><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select><input id="search" placeholder="بحث في النصوص…" style="flex:1;min-width:140px"><button class="btn ghost sm" id="resetLang">استعادة نصوص هذه اللغة</button></div><p class="hint">يمكن استخدام وسوم HTML البسيطة مثل &lt;br&gt; و&lt;em&gt; في العناوين.</p></div><div id="groups"></div>`;
+  $('#langSel').value = textLang; $('#search').value = filter;
+  $('#langSel').onchange = (e) => { textLang = e.target.value; drawGroups(); };
+  $('#search').oninput = (e) => { filter = e.target.value.toLowerCase(); drawGroups(); };
+  $('#resetLang').onclick = () => { if (confirm('استعادة جميع نصوص هذه اللغة للأصل؟')) { edited[textLang] = clone(siteTranslations[textLang]); setDirty(); drawGroups(); } };
+  drawGroups();
+}
+function drawGroups() {
+  const box = $('#groups'); box.innerHTML = ''; const map = new Map();
+  leaves(edited[textLang]).forEach(([path, val]) => { const g = groupOf(path[0]); if (!map.has(g)) map.set(g, []); map.get(g).push([path, val]); });
+  [...map].forEach(([g, items]) => {
+    const list = items.filter(([path, val]) => !filter || (path.join('.') + ' ' + val).toLowerCase().includes(filter)); if (!list.length) return;
+    const d = el(`<details class="group" ${filter ? 'open' : ''}><summary>${g} (${list.length})</summary><div class="body"></div></details>`);
+    list.forEach(([path, val]) => {
+      const long = String(val).length > 60 || /<|\n/.test(val); const f = el(`<div><label>${esc(path.join(' › '))}</label>${long ? `<textarea class="ltr"></textarea>` : `<input class="ltr">`}</div>`);
+      const inp = f.querySelector('textarea,input'); inp.value = val;
+      inp.oninput = () => { setPath(edited[textLang], path, inp.value); setDirty(); };
+      d.querySelector('.body').append(f);
+    });
+    box.append(d);
+  });
+  if (!box.children.length) box.innerHTML = '<p class="hint">لا توجد نتائج.</p>';
+}
+
+/* ---------- export ---------- */
+function renderExport() {
+  $('#p-export').innerHTML = `<div class="card stack"><h2>طريقة حفظ التعديلات في الموقع</h2>
+  <ol class="hint" style="padding-inline-start:20px;margin:0"><li>اضغط «توليد الملف» ليظهر المحتوى بالأسفل.</li><li>اضغط «نسخ» (أو «تنزيل»).</li><li>في Code Studio افتح ملف <b dir="ltr">content.json</b> والصق المحتوى مكان القديم ثم احفظ.</li><li>حدّث الموقع لترى التغييرات.</li></ol>
+  <div class="row"><button class="btn gold" id="gen">توليد الملف</button><button class="btn" id="cp">نسخ</button><button class="btn ghost" id="dl">تنزيل</button></div>
+  <textarea id="json" class="ltr" style="min-height:220px;font-size:12px" placeholder="سيظهر محتوى content.json هنا…"></textarea>
+  <div class="hint" id="size"></div>
+  <div class="row"><button class="btn ghost sm" id="imp">استيراد من النص أعلاه</button><button class="btn red sm" id="resetAll">استعادة الموقع الأصلي</button></div></div>`;
+  const box = $('#json');
+  window.refreshJson = () => { const t = JSON.stringify(buildOutput(), null, 1); box.value = t; const kb = Math.round(new Blob([t]).size / 1024); $('#size').textContent = 'الحجم: ' + kb + ' KB' + (kb > 1500 ? ' — كبير، قلّل عدد الصور المخصصة.' : ''); };
+  $('#gen').onclick = () => { refreshJson(); toast('تم التوليد ✔'); };
+  $('#cp').onclick = async () => { refreshJson(); try { await navigator.clipboard.writeText(box.value); } catch { box.focus(); box.select(); document.execCommand('copy'); } toast('تم النسخ ✔ الصقه في content.json'); setDirty(false); };
+  $('#dl').onclick = () => { refreshJson(); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([box.value], { type: 'application/json' })); a.download = 'content.json'; a.click(); setDirty(false); };
+  $('#imp').onclick = () => { try { load(JSON.parse(box.value)); renderAll(); show('export'); box.value = ''; toast('تم الاستيراد ✔'); } catch { toast('JSON غير صالح', true); } };
+  $('#resetAll').onclick = () => { if (!confirm('مسح كل التعديلات؟')) return; safeLS.del(draftKey); load({}); renderAll(); show('export'); setDirty(); };
+}
+$('#saveBtn').onclick = () => { show('export'); refreshJson(); window.scrollTo(0, 0); };
+
+start();
+</script>
+</body>
+</html>
