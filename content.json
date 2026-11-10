@@ -1,4 +1,29 @@
-
+{
+ "contact": {
+  "instagram": "https://www.instagram.com/kaoukiquads?obrf=OWdhOHJoYnZud3c2"
+ },
+ "settings": {},
+ "theme": {},
+ "tours": [
+  {},
+  {},
+  {},
+  {}
+ ],
+ "prices": [
+  {},
+  {},
+  {},
+  {}
+ ],
+ "images": {},
+ "texts": {
+  "fr": {
+   "p3Time": "Demi-journée",
+   "p3Title": "3 HEURES "
+  }
+ }
+}
 {
  "contact": {},
  "settings": {},
