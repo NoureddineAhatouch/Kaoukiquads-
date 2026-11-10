@@ -4,41 +4,8 @@
  },
  "settings": {},
  "theme": {},
- "tours": [
-  {},
-  {},
-  {},
-  {}
- ],
- "prices": [
-  {},
-  {},
-  {},
-  {}
- ],
- "images": {},
- "texts": {
-  "fr": {
-   "p3Time": "Demi-journée",
-   "p3Title": "3 HEURES "
-  }
- }
-
- "contact": {},
- "settings": {},
- "theme": {},
- "tours": [
-  {},
-  {},
-  {},
-  {}
- ],
- "prices": [
-  {},
-  {},
-  {},
-  {}
- ],
+ "tours": [{}, {}, {}, {}],
+ "prices": [{}, {}, {}, {}],
  "images": {},
  "texts": {
   "fr": {
