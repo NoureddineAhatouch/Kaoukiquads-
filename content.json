@@ -4,13 +4,24 @@
  },
  "settings": {},
  "theme": {},
- "tours": [{}, {}, {}, {}],
- "prices": [{}, {}, {}, {}],
+ "tours": [
+  {},
+  {},
+  {},
+  {}
+ ],
+ "prices": [
+  {},
+  {},
+  {},
+  {}
+ ],
  "images": {},
  "texts": {
   "fr": {
    "p3Time": "Demi-journée",
-   "p3Title": "3 HEURES "
+   "p3Title": "3 HEURES ",
+   "r3Title": "Demi-journée "
   }
  }
 }
