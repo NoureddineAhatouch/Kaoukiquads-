@@ -158,3 +158,5 @@
 .reviews-section>.shell{opacity:1!important;transform:none!important}
 .reviews-section [class*="elfsight-app"]{display:block;width:100%;min-height:220px;position:relative}
 .hero .g-reviews{margin:0}
+.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.hero-video{display:none}}

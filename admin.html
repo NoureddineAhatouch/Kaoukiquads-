@@ -46,12 +46,14 @@ main{max-width:900px;margin:0 auto;padding:14px}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="gate" class="login"><div class="card stack" id="gateBox"></div></div>
+<div id="app" hidden>
 <header>
   <strong>لوحة التحكم</strong>
   <span class="dirty" id="dirty">● تغييرات غير محفوظة</span>
   <a href="index.html" target="_blank" rel="noopener">عرض الموقع ↗</a>
-  <button class="btn gold sm" id="saveBtn">حفظ ⬇</button>
+  <button class="btn gold sm" id="saveBtn">حفظ ☁</button>
+  <button class="btn ghost sm" id="logoutBtn">خروج</button>
 </header>
 <nav class="tabs" id="tabs"></nav>
 <main>
@@ -144,6 +146,13 @@ function renderGeneral() {
   p.querySelectorAll('[data-k]').forEach((n) => bindInput(n, content.contact, n.dataset.k));
   p.querySelectorAll('[data-t]').forEach((n) => bindInput(n, content.theme, n.dataset.t));
   bindInput($('#fw'), content.settings, 'floatingWhatsapp');
+  const rv = el(`<div class="card stack" style="margin-top:12px"><h2>تقييمات Google</h2><p class="hint">الشارة في أعلى الصفحة. اتركها فارغة لإخفاء الرقم. لتعديل العناوين افتح تبويب النصوص › تقييمات Google.</p><div class="grid">
+    <div><label>التقييم (مثال 4.9)</label><input type="number" step="0.1" min="0" max="5" class="ltr" data-s="googleRating" value="${s.googleRating ?? ''}"></div>
+    <div><label>عدد التقييمات</label><input type="number" min="0" class="ltr" data-s="googleCount" value="${s.googleCount ?? ''}"></div></div>
+    <label class="chk"><input type="checkbox" id="showRv" ${s.showReviews === false ? '' : 'checked'}> إظهار قسم تعليقات الزبناء</label></div>`);
+  p.append(rv);
+  rv.querySelectorAll('[data-s]').forEach((n) => bindInput(n, content.settings, n.dataset.s, true));
+  bindInput($('#showRv'), content.settings, 'showReviews');
   $('#resetTheme').onclick = () => { content.theme = {}; setDirty(); renderGeneral(); };
 }
 
@@ -157,6 +166,18 @@ function renderTours() {
       <div><label>سعر راكبين (Duo)</label><input type="number" min="0" step="10" class="ltr" value="${pr.duo ?? defaultPrices[i].duo}"></div></div>
       <label class="chk"><input type="checkbox" ${t.visible === false ? '' : 'checked'}> إظهار هذه الجولة في الموقع</label></div>`);
     const [a, b] = card.querySelectorAll('input[type=number]'); bindInput(a, pr, 'solo', true); bindInput(b, pr, 'duo', true); bindInput(card.querySelector('[type=checkbox]'), t, 'visible');
+    const det = el(`<details class="group"><summary>الاسم والمدة والوصف (FR / EN / ES)</summary><div class="body"></div></details>`);
+    ['fr', 'en', 'es'].forEach((l) => {
+      const n = i + 1, E = edited[l];
+      [['Title', 'الاسم'], ['Time', 'المدة'], ['Desc', 'الوصف']].forEach(([k, lab]) => {
+        const long = k === 'Desc';
+        const f = el(`<div><label>${lab} — ${l.toUpperCase()}</label>${long ? '<textarea class="ltr"></textarea>' : '<input class="ltr">'}</div>`);
+        const inp = f.querySelector('textarea,input'); inp.value = E['p' + n + k] ?? '';
+        inp.oninput = () => { E['p' + n + k] = inp.value; if (k === 'Title' && ('r' + n + 'Title') in E) E['r' + n + 'Title'] = inp.value; setDirty(); };
+        det.querySelector('.body').append(f);
+      });
+    });
+    card.append(det);
     p.append(card);
   });
 }
@@ -190,7 +211,7 @@ function renderImages() {
 }
 
 /* ---------- texts ---------- */
-const groups = [[/^nav|^book$/, 'القائمة العلوية'], [/^hero/, 'الواجهة الرئيسية'], [/^intro/, 'المقدمة'], [/^pricing|^p\d|^solo|^duo|^most|^priceLink|^priceNote/, 'الأسعار وبطاقات الجولات'], [/^routes|^r\d|^routeLink|^routeItems/, 'تفاصيل الجولات'], [/^photo/, 'معرض الصور'], [/^included|^needItems/, 'ما يشمله السعر'], [/^faq/, 'الأسئلة الشائعة'], [/^banner/, 'شريط الحجز'], [/^reservation|^form|^name|^adults|^children|^date|^time|^plan|^choose/, 'نموذج الحجز'], [/^booking/, 'رسالة واتساب'], [/^contact|^whatsapp|^location|^hours/, 'التواصل'], [/^footer/, 'التذييل']];
+const groups = [[/^nav|^book$/, 'القائمة العلوية'], [/^hero/, 'الواجهة الرئيسية'], [/^reviews|^g[A-Z]/, 'تقييمات Google'], [/^intro/, 'المقدمة'], [/^pricing|^p\d|^solo|^duo|^most|^priceLink|^priceNote/, 'الأسعار وبطاقات الجولات'], [/^routes|^r\d|^routeLink|^routeItems/, 'تفاصيل الجولات'], [/^photo/, 'معرض الصور'], [/^included|^needItems/, 'ما يشمله السعر'], [/^faq/, 'الأسئلة الشائعة'], [/^banner/, 'شريط الحجز'], [/^reservation|^form|^name|^adults|^children|^date|^time|^plan|^choose/, 'نموذج الحجز'], [/^booking/, 'رسالة واتساب'], [/^contact|^whatsapp|^location|^hours/, 'التواصل'], [/^footer/, 'التذييل']];
 const groupOf = (k) => (groups.find(([re]) => re.test(k)) || [0, 'أخرى'])[1];
 function leaves(obj, path = []) { return Object.entries(obj).flatMap(([k, v]) => (v && typeof v === 'object' ? leaves(v, [...path, k]) : [[[...path, k], v]])); }
 function setPath(obj, path, val) { path.slice(0, -1).reduce((o, k) => o[k], obj)[path.at(-1)] = val; }
@@ -236,9 +257,108 @@ function renderExport() {
   $('#imp').onclick = () => { try { load(JSON.parse(box.value)); renderAll(); show('export'); box.value = ''; toast('تم الاستيراد ✔'); } catch { toast('JSON غير صالح', true); } };
   $('#resetAll').onclick = () => { if (!confirm('مسح كل التعديلات؟')) return; safeLS.del(draftKey); load({}); renderAll(); show('export'); setDirty(); };
 }
-$('#saveBtn').onclick = () => { show('export'); refreshJson(); window.scrollTo(0, 0); };
 
-start();
+/* ---------- login + GitHub save ---------- */
+const GH_KEY = 'kq-gh-config';
+let gh = null;
+const enc = new TextEncoder(), dec = new TextDecoder();
+const toB64 = (bytes) => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function keyFrom(pw, salt) {
+  const m = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encryptToken(pw, token) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await keyFrom(pw, salt), enc.encode(token));
+  return { salt: toB64(salt), iv: toB64(iv), ct: toB64(new Uint8Array(ct)) };
+}
+async function decryptToken(pw, o) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(o.iv) }, await keyFrom(pw, fromB64(o.salt)), fromB64(o.ct));
+  return dec.decode(pt);
+}
+const ghFetch = (token, owner, repo, path, opts = {}) => fetch(`https://api.github.com/repos/${owner}/${repo}${path}`, { ...opts, headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' } });
+const ghErr = (r) => (r.status === 401 ? 'المفتاح غير صالح أو منتهي الصلاحية.' : r.status === 403 || r.status === 404 ? 'لا توجد صلاحية الكتابة على المستودع (Contents: Read and write).' : 'خطأ من GitHub (' + r.status + ').');
+
+function guessRepo() {
+  const h = location.hostname; let owner = '', repo = '';
+  if (h.endsWith('.github.io')) { owner = h.split('.')[0]; const seg = location.pathname.split('/')[1]; repo = seg && !seg.includes('.html') ? seg : owner + '.github.io'; }
+  return { owner, repo };
+}
+function renderGate() {
+  const box = $('#gateBox'); let cfg = null;
+  try { cfg = JSON.parse(safeLS.get(GH_KEY)); } catch {}
+  if (cfg) {
+    box.innerHTML = `<h1>لوحة التحكم</h1><label>كلمة السر</label><input type="password" id="gpw" autocomplete="current-password"><button class="btn gold" id="gin" style="margin-top:12px;width:100%">دخول</button><button class="btn ghost sm" id="greset" style="margin-top:8px;width:100%">إعادة الإعداد (نسيت كلمة السر)</button><div class="hint" id="gmsg"></div>`;
+    const go = async () => {
+      const m = $('#gmsg'); m.textContent = '…';
+      try { const token = await decryptToken($('#gpw').value, cfg.token); gh = { token, owner: cfg.owner, repo: cfg.repo, branch: cfg.branch }; enterApp(); }
+      catch { m.style.color = 'var(--red)'; m.textContent = 'كلمة السر غير صحيحة.'; }
+    };
+    $('#gin').onclick = go; $('#gpw').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+    $('#greset').onclick = () => { if (confirm('سيتم حذف الإعداد المحفوظ في هذا الجهاز وإعادة إدخال مفتاح GitHub. متابعة؟')) { safeLS.del(GH_KEY); renderGate(); } };
+  } else {
+    const g = guessRepo();
+    box.innerHTML = `<h1>الإعداد الأول</h1><p class="hint">يُحفظ مفتاح GitHub مشفّرًا بكلمة السر في هذا الجهاز فقط. لا أحد يستطيع تعديل الموقع بدونه.</p>
+    <label>مفتاح GitHub (Fine-grained token)</label><input type="password" class="ltr" id="gtok" autocomplete="off">
+    <div class="grid"><div><label>اسم الحساب</label><input class="ltr" id="gown" value="${esc(g.owner)}"></div><div><label>اسم المستودع</label><input class="ltr" id="grepo" value="${esc(g.repo)}"></div></div>
+    <label>كلمة سر جديدة (6 أحرف على الأقل)</label><input type="password" id="gpw1" autocomplete="new-password">
+    <label>أعد كتابتها</label><input type="password" id="gpw2" autocomplete="new-password">
+    <button class="btn gold" id="gsave" style="margin-top:12px;width:100%">حفظ ودخول</button><div class="hint" id="gmsg"></div>`;
+    $('#gsave').onclick = async () => {
+      const m = $('#gmsg'); m.style.color = 'var(--muted)';
+      const token = $('#gtok').value.trim(), owner = $('#gown').value.trim(), repo = $('#grepo').value.trim(), p1 = $('#gpw1').value;
+      if (!token || !owner || !repo) { m.textContent = 'أكمل جميع الحقول.'; return; }
+      if (p1.length < 6 || p1 !== $('#gpw2').value) { m.textContent = 'كلمتا السر غير متطابقتين أو قصيرتان.'; return; }
+      m.textContent = 'جاري التحقق من GitHub…';
+      try {
+        const r = await ghFetch(token, owner, repo, '');
+        if (!r.ok) { m.style.color = 'var(--red)'; m.textContent = ghErr(r); return; }
+        const info = await r.json();
+        if (!info.permissions?.push) { m.style.color = 'var(--red)'; m.textContent = 'المفتاح لا يملك صلاحية الكتابة.'; return; }
+        const branch = info.default_branch || 'main';
+        safeLS.set(GH_KEY, JSON.stringify({ owner, repo, branch, token: await encryptToken(p1, token) }));
+        gh = { token, owner, repo, branch }; enterApp();
+      } catch { m.style.color = 'var(--red)'; m.textContent = 'تعذّر الاتصال بـ GitHub.'; }
+    };
+  }
+}
+function enterApp() { $('#gate').hidden = true; $('#app').hidden = false; start(); }
+$('#logoutBtn').onclick = () => { if (dirty && !confirm('توجد تغييرات غير محفوظة. الخروج؟')) return; dirty = false; gh = null; location.reload(); };
+
+async function getSha(path) {
+  const r = await ghFetch(gh.token, gh.owner, gh.repo, `/contents/${path}?ref=${encodeURIComponent(gh.branch)}`);
+  if (r.status === 404) return undefined; if (!r.ok) throw new Error(ghErr(r)); return (await r.json()).sha;
+}
+async function putFile(path, b64, msg) {
+  for (let i = 0; i < 3; i++) {
+    const body = { message: msg, content: b64, branch: gh.branch }, sha = await getSha(path); if (sha) body.sha = sha;
+    const r = await ghFetch(gh.token, gh.owner, gh.repo, `/contents/${path}`, { method: 'PUT', body: JSON.stringify(body) });
+    if (r.ok) return; if (r.status !== 409 && r.status !== 422) throw new Error(ghErr(r));
+  }
+  throw new Error('تعذّر الحفظ بسبب تعارض، أعد المحاولة.');
+}
+async function uploadImages() {
+  for (const [id, url] of Object.entries(content.images)) {
+    const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(url || ''); if (!m) continue;
+    const name = `uploads/${id}-${Date.now().toString(36)}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`;
+    await putFile(name, m[2], 'Upload image ' + id); content.images[id] = name;
+  }
+}
+async function saveToGitHub() {
+  if (!gh) { toast('سجّل الدخول أولاً', true); return; }
+  const btn = $('#saveBtn'); btn.disabled = true; btn.textContent = 'جاري الحفظ…';
+  try {
+    await uploadImages();
+    await putFile('content.json', toB64(enc.encode(JSON.stringify(buildOutput(), null, 1))), 'Update site content from admin');
+    setDirty(false); safeLS.del(draftKey); renderImages();
+    toast('تم الحفظ ✔ — يظهر في الموقع خلال دقيقة تقريبًا');
+  } catch (e) { toast(e.message || 'فشل الحفظ', true); }
+  finally { btn.disabled = false; btn.textContent = 'حفظ ☁'; }
+}
+$('#saveBtn').onclick = saveToGitHub;
+
+renderGate();
 </script>
 </body>
 </html>
