@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://noureddineahatouch.github.io/Kaoukiquads-/sitemap.xml
