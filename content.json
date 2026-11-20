@@ -31,10 +31,19 @@
     "src": "uploads/tour1-mwpmw6iq-n5mp.jpg"
    }
   ],
-  "tour2": [],
+  "tour2": [
+   {
+    "src": "uploads/tour2-mwpn2x8k-hxbc.jpg"
+   }
+  ],
   "tour3": [],
   "tour4": [],
-  "gallery": []
+  "gallery": [
+   {
+    "src": "uploads/gallery-mwpn3075-h0u3.jpg",
+    "caption": "Cap sim"
+   }
+  ]
  },
  "texts": {
   "fr": {
