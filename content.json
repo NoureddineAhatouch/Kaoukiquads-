@@ -4,7 +4,7 @@
  },
  "settings": {
   "discountEnabled": true,
-  "discountPercent": 20
+  "discountPercent": 10
  },
  "theme": {},
  "tours": [
