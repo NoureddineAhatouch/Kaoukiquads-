@@ -1,3 +1,5 @@
+/* Promotion : lit content.json lui-même, donc indépendant de app.js et style.css.
+   Diagnostic : ajouter ?debug à l'adresse du site pour voir l'état en bas de page. */
 (function () {
   var DEBUG = /[?&]debug/.test(location.search);
   function say(msg, ok) {
@@ -19,17 +21,19 @@
     var on = s.discountEnabled === true && pct > 0 && pct < 100;
     var badge = document.getElementById('discount-badge');
     if (!on) { if (badge) badge.remove(); say('OFF — discountEnabled=' + JSON.stringify(s.discountEnabled) + ' discountPercent=' + JSON.stringify(s.discountPercent), false); return; }
+
     if (!badge) { badge = document.createElement('div'); badge.id = 'discount-badge'; document.body.appendChild(badge); }
     badge.textContent = '-' + pct + '%';
     var big = window.innerWidth >= 900;
     badge.style.cssText = 'position:fixed;z-index:9999;top:' + (big ? 104 : 90) + 'px;left:' + (big ? 24 : 14) + 'px;display:grid;place-items:center;width:' + (big ? 84 : 68) + 'px;height:' + (big ? 84 : 68) + 'px;border-radius:50%;background:#c9f0d3;border:2px solid #8fd6a5;color:#0b5d2a;font:800 ' + (big ? 30 : 24) + 'px/1 "Barlow Condensed",Arial,sans-serif;box-shadow:0 8px 22px rgba(11,93,42,.28);pointer-events:none';
+
     var cards = document.querySelectorAll('.price-card');
     cards.forEach(function (card, i) {
       var p = Object.assign({}, defaults[i] || {}, (c.prices && c.prices[i]) || {});
       var st = card.querySelectorAll('.price-pair strong');
       if (st.length !== 2) return;
       [p.solo, p.duo].forEach(function (v, k) {
-        st[k].innerHTML = '<s style="font-size:.62em;font-weight:500;color:#8a8a8a;margin-right:6px">' + fmt(v) + '</s> ' + fmt(Math.round(v * (1 - pct / 100))) + ' <i>DH</i>';
+        st[k].innerHTML = '<s style="font-size:.62em;font-weight:600;color:#d32f2f;text-decoration:line-through;text-decoration-color:#d32f2f;text-decoration-thickness:2px;margin-right:6px">' + fmt(v) + '</s> ' + fmt(Math.round(v * (1 - pct / 100))) + ' <i>DH</i>';
       });
     });
     say('ON — -' + pct + '% applied, price cards found: ' + cards.length, true);
