@@ -24,10 +24,20 @@
   "fr": {
    "p2Title": "Cap Sim & Cascade",
    "p3Time": "Demi-journée",
-   "p3Title": "3 HEURES ",
+   "p3Title": "3 Heures ",
    "r2Title": "Cap Sim & Cascade",
-   "r3Title": "Demi-journée ",
+   "r3Title": "3 Heures ",
    "hours": "08:00 — 20:00"
+  },
+  "en": {
+   "p3Time": "3 Hours ",
+   "p3Title": "Half Day",
+   "r3Title": "Half Day"
+  },
+  "es": {
+   "p3Time": "3  Horas",
+   "p3Title": "Medio día",
+   "r3Title": "Medio día"
   }
  }
 }
