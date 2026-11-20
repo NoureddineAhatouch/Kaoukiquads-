@@ -83,6 +83,8 @@ reservationForm?.addEventListener('submit', (event) => {
 
 const defaultPrices = [{ solo: 300, duo: 450 }, { solo: 550, duo: 750 }, { solo: 800, duo: 1000 }, { solo: 1300, duo: 1550 }];
 const getPrices = () => defaultPrices.map((p, i) => ({ ...p, ...(siteContent.prices?.[i] || {}) }));
+const discountPct = () => { const s = siteContent.settings || {}; const p = Number(s.discountPercent); return s.discountEnabled === true && p > 0 && p < 100 ? p : 0; };
+const discounted = (n) => { const p = discountPct(); return p ? Math.round(Number(n) * (1 - p / 100)) : Number(n); };
 const fmtPrice = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 function mergeDeep(base, extra) {
   if (extra === undefined || extra === null) return base;
@@ -103,8 +105,14 @@ function applyContent(c) {
   prices.forEach((p, i) => {
     const card = q('.price-card')[i];
     const strongs = card?.querySelectorAll('.price-pair strong');
-    if (strongs?.length === 2) { strongs[0].innerHTML = fmtPrice(p.solo) + ' <i>DH</i>'; strongs[1].innerHTML = fmtPrice(p.duo) + ' <i>DH</i>'; }
+    if (strongs?.length === 2) { const old = (n) => (discountPct() ? '<s>' + fmtPrice(n) + '</s> ' : '');
+      strongs[0].innerHTML = old(p.solo) + fmtPrice(discounted(p.solo)) + ' <i>DH</i>'; strongs[1].innerHTML = old(p.duo) + fmtPrice(discounted(p.duo)) + ' <i>DH</i>'; }
   });
+  let badge = document.getElementById('discount-badge');
+  if (discountPct()) {
+    if (!badge) { badge = document.createElement('div'); badge.id = 'discount-badge'; document.body.appendChild(badge); }
+    badge.textContent = '-' + discountPct() + '%'; badge.setAttribute('aria-label', 'Promo -' + discountPct() + '%');
+  } else if (badge) badge.remove();
   (c.tours || []).forEach((tour, i) => {
     if (tour?.visible === false) {
       [q('.price-card')[i], q('.route-card')[i], bookingSelect?.options[i + 1]].forEach((el) => { if (el) el.hidden = true; });
@@ -161,7 +169,7 @@ function applyLanguage(lang) {
   document.querySelectorAll('.route-card').forEach((card, i) => card.querySelectorAll('li').forEach((node, j) => { node.textContent = t.routeItems[i]?.[j] || ''; }));
   document.querySelectorAll('.faq-list details').forEach((detail, i) => { const item = t.faqItems[i]; if (!item) return; detail.querySelector('summary').innerHTML = `${item[0]}<span>+</span>`; detail.querySelector('p').textContent = item[1]; });
   const prices = getPrices();
-  const plans = [1, 2, 3, 4].map((n) => t['p' + n + 'Title'] + ' — ' + t['p' + n + 'Time'] + ' — ' + prices[n - 1].solo + ' DH');
+  const plans = [1, 2, 3, 4].map((n) => t['p' + n + 'Title'] + ' — ' + t['p' + n + 'Time'] + ' — ' + discounted(prices[n - 1].solo) + ' DH');
   const select = document.querySelector('#booking-plan');
   if (select) { Array.from(select.options).forEach((option, i) => { option.textContent = i === 0 ? t.choose : plans[i - 1]; }); }
   const formLabels = [['#guest-name','nameLabel'],['#adult-count','adultsLabel'],['#child-count','childrenLabel'],['#booking-date','dateLabel'],['#booking-time','timeLabel'],['#booking-plan','planLabel']];
