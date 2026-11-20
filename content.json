@@ -2,7 +2,9 @@
  "contact": {
   "instagram": "https://www.instagram.com/kaoukiquads?obrf=OWdhOHJoYnZud3c2"
  },
- "settings": {},
+ "settings": {
+  "discountEnabled": true
+ },
  "theme": {},
  "tours": [
   {},
