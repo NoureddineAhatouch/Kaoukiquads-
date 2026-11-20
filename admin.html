@@ -43,6 +43,11 @@ main{max-width:900px;margin:0 auto;padding:14px}
 #toast.err{background:var(--red)}
 .dirty{color:#ffd77a;font-size:13px;display:none}
 .hint{font-size:13px;color:var(--muted)}
+.img-slot .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.img-slot .th{position:relative;width:64px;height:64px}
+.img-slot .th img{width:64px;height:64px;margin:0;border-radius:6px;object-fit:cover}
+.th button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border:0;border-radius:50%;background:var(--red);color:#fff;cursor:pointer;line-height:1}
+.gx .gi{display:flex;gap:10px;align-items:center;margin-bottom:10px}.gx .gi img{width:72px;height:72px;object-fit:cover;border-radius:8px}.gx .gi input{flex:1}
 </style>
 </head>
 <body>
@@ -99,7 +104,7 @@ async function start() {
   load(c); buildTabs(); renderAll(); setDirty(false);
 }
 function load(c) {
-  content = { contact: {}, settings: {}, theme: {}, tours: [{}, {}, {}, {}], prices: [{}, {}, {}, {}], images: {}, texts: {}, ...c };
+  content = { contact: {}, settings: {}, theme: {}, tours: [{}, {}, {}, {}], prices: [{}, {}, {}, {}], images: {}, extraImages: {}, texts: {}, ...c }; content.extraImages ||= {};
   ['fr', 'en', 'es'].forEach((l) => (edited[l] = merge(siteTranslations[l], content.texts?.[l])));
 }
 function buildOutput() {
@@ -201,6 +206,36 @@ function resizeToDataUrl(file) {
     img.onerror = () => reject(new Error('تعذّر قراءة الصورة')); img.src = url;
   });
 }
+const EXTRA_SLOTS = ['hero', 'banner', 'tour1', 'tour2', 'tour3', 'tour4'];
+async function addFiles(list, files, extra = {}) {
+  for (const f of files) { try { toast('جاري التجهيز…'); list.push({ src: await resizeToDataUrl(f), ...extra }); } catch (err) { toast(err.message, true); } }
+  setDirty(); toast('تم ✔ — لا تنس «حفظ»');
+}
+function extraBlock(id) {
+  const list = (content.extraImages[id] ||= []);
+  const box = el(`<div class="extras"><p class="hint" style="margin:10px 0 2px">صور إضافية (تظهر كسلايدر في الموقع)</p><div class="thumbs"></div><label class="btn sm ghost" style="margin:4px 0 0;display:inline-block">+ إضافة صور<input type="file" accept="image/*" multiple hidden></label></div>`);
+  const draw = () => {
+    const t = box.querySelector('.thumbs'); t.innerHTML = '';
+    list.forEach((it, i) => { const th = el(`<div class="th"><img src="${esc(it.src)}" alt=""><button type="button" title="حذف">✕</button></div>`); th.querySelector('button').onclick = () => { list.splice(i, 1); setDirty(); draw(); }; t.append(th); });
+  };
+  box.querySelector('input').onchange = async (e) => { await addFiles(list, e.target.files); e.target.value = ''; draw(); };
+  draw(); return box;
+}
+function galleryExtras() {
+  const list = (content.extraImages.gallery ||= []);
+  const box = el(`<div class="card stack" style="margin-top:12px"><h2>صور إضافية للمعرض (Les lieux à découvrir)</h2><p class="hint">كل صورة جديدة تظهر في نهاية المعرض، ويمكنك كتابة تسمية لها.</p><div class="gx"></div><label class="btn sm gold" style="margin:0;color:#fff;display:inline-block">+ إضافة صور<input type="file" accept="image/*" multiple hidden></label></div>`);
+  const draw = () => {
+    const g = box.querySelector('.gx'); g.innerHTML = '';
+    list.forEach((it, i) => {
+      const row = el(`<div class="gi"><img src="${esc(it.src)}" alt=""><input class="ltr" placeholder="التسمية (اختياري)" value="${esc(it.caption || '')}"><button type="button" class="btn red sm">حذف</button></div>`);
+      row.querySelector('input').oninput = (e) => { it.caption = e.target.value; setDirty(); };
+      row.querySelector('button').onclick = () => { list.splice(i, 1); setDirty(); draw(); };
+      g.append(row);
+    });
+  };
+  box.querySelector('input').onchange = async (e) => { await addFiles(list, e.target.files, { caption: '' }); e.target.value = ''; draw(); };
+  draw(); return box;
+}
 function renderImages() {
   const p = $('#p-images'); p.innerHTML = '<p class="hint">اختر صورة من هاتفك وسيتم تصغيرها وضغطها تلقائيًا وتضمينها داخل content.json. كل صورة تزيد حجم الملف قليلًا (≈100–200 KB).</p><div class="grid" id="imgGrid"></div>';
   slots.forEach(([id, label, def]) => {
@@ -212,8 +247,10 @@ function renderImages() {
       catch (err) { toast(err.message, true); }
     };
     card.querySelector('button').onclick = () => { delete content.images[id]; card.querySelector('img').src = def; setDirty(); };
+    if (EXTRA_SLOTS.includes(id)) card.append(extraBlock(id));
     $('#imgGrid').append(card);
   });
+  p.append(galleryExtras());
 }
 
 /* ---------- texts ---------- */
@@ -344,6 +381,13 @@ async function putFile(path, b64, msg) {
   }
   throw new Error('تعذّر الحفظ بسبب تعارض، أعد المحاولة.');
 }
+async function uploadExtras() {
+  for (const [slot, list] of Object.entries(content.extraImages || {})) for (const it of list) {
+    const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(it.src || ''); if (!m) continue;
+    const name = `uploads/${slot}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`;
+    await putFile(name, m[2], 'Upload image ' + slot); it.src = name;
+  }
+}
 async function uploadImages() {
   for (const [id, url] of Object.entries(content.images)) {
     const m = /^data:image\/(jpeg|png|webp);base64,(.+)$/.exec(url || ''); if (!m) continue;
@@ -356,6 +400,7 @@ async function saveToGitHub() {
   const btn = $('#saveBtn'); btn.disabled = true; btn.textContent = 'جاري الحفظ…';
   try {
     await uploadImages();
+    await uploadExtras();
     await putFile('content.json', toB64(enc.encode(JSON.stringify(buildOutput(), null, 1))), 'Update site content from admin');
     setDirty(false); safeLS.del(draftKey); renderImages();
     toast('تم الحفظ ✔ — يظهر في الموقع خلال دقيقة تقريبًا');
@@ -368,4 +413,3 @@ renderGate();
 </script>
 </body>
 </html>
-
