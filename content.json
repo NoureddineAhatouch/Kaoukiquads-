@@ -3,7 +3,8 @@
   "instagram": "https://www.instagram.com/kaoukiquads?obrf=OWdhOHJoYnZud3c2"
  },
  "settings": {
-  "discountEnabled": true
+  "discountEnabled": true,
+  "discountPercent": 20
  },
  "theme": {},
  "tours": [
