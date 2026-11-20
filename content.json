@@ -20,6 +20,22 @@
   {}
  ],
  "images": {},
+ "extraImages": {
+  "hero": [],
+  "banner": [],
+  "tour1": [
+   {
+    "src": "uploads/tour1-mwpmw3lc-vxj6.jpg"
+   },
+   {
+    "src": "uploads/tour1-mwpmw6iq-n5mp.jpg"
+   }
+  ],
+  "tour2": [],
+  "tour3": [],
+  "tour4": [],
+  "gallery": []
+ },
  "texts": {
   "fr": {
    "p2Title": "Cap Sim & Cascade",
