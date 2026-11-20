@@ -81,7 +81,7 @@ const slots = [
   ['hero', 'صورة الغلاف الرئيسية', 'hero.jpg'], ['banner', 'صورة قسم الحجز', 'gallery-6.jpg'],
   ['tour1', 'جولة 1 — Balade Plage', 'tour-1.jpg'], ['tour2', 'جولة 2 — Cap Sim', 'tour-2.jpg'], ['tour3', 'جولة 3 — Sunset', 'tour-3.jpg'], ['tour4', 'جولة 4 — Raid Iftane', 'gallery-5.jpg'],
   ['g1', 'المعرض 1', 'gallery-1.jpg'], ['g2', 'المعرض 2', 'gallery-2.jpg'], ['g3', 'المعرض 3', 'gallery-3.jpg'], ['g4', 'المعرض 4', 'gallery-4.jpg'], ['g5', 'المعرض 5', 'gallery-5.jpg'], ['g6', 'المعرض 6', 'gallery-6.jpg'],
-  ['logo', 'الشعار', 'logo-desktop.png']
+  ['logo', 'الشعار', 'logo.png']
 ];
 const tourNames = ['Balade Plage', "Cap Sim & Sidi M'Barek", 'Sunset Trip', 'Raid Iftane'];
 
@@ -139,13 +139,19 @@ function renderGeneral() {
     <div><label>بداية العمل</label><input type="time" data-k="open" value="${c.open ?? defaultContact.open}"></div>
     <div><label>نهاية العمل</label><input type="time" data-k="close" value="${c.close ?? defaultContact.close}"></div></div></div>
     <div class="card stack" style="margin-top:12px"><h2>المظهر والإعدادات</h2><div class="grid">
-    <div><label>اللون الذهبي</label><input type="color" data-t="gold" value="${th.gold || '#c9953d'}"></div>
-    <div><label>اللون الأخضر الداكن</label><input type="color" data-t="forest" value="${th.forest || '#26372f'}"></div></div>
+    <div><label>اللون الذهبي</label><input type="color" data-t="gold" value="${th.gold || '#f26b1d'}"></div>
+    <div><label>اللون الداكن</label><input type="color" data-t="forest" value="${th.forest || '#151515'}"></div></div>
     <label class="chk"><input type="checkbox" id="fw" ${s.floatingWhatsapp === false ? '' : 'checked'}> إظهار زر واتساب العائم</label>
     <button class="btn ghost sm" id="resetTheme">استعادة الألوان الافتراضية</button></div>`;
   p.querySelectorAll('[data-k]').forEach((n) => bindInput(n, content.contact, n.dataset.k));
   p.querySelectorAll('[data-t]').forEach((n) => bindInput(n, content.theme, n.dataset.t));
   bindInput($('#fw'), content.settings, 'floatingWhatsapp');
+  const dc = el(`<div class="card stack" style="margin-top:12px"><h2>تخفيض على جميع الأسعار</h2><p class="hint">عند التفعيل تظهر دائرة خضراء أعلى يسار الموقع، وتُشطب الأسعار القديمة ويظهر السعر بعد التخفيض (في البطاقات وقائمة الحجز).</p>
+    <label class="chk"><input type="checkbox" id="discOn" ${s.discountEnabled === true ? 'checked' : ''}> تفعيل التخفيض (إلغاء التفعيل يعيد الأسعار العادية)</label>
+    <div><label>نسبة التخفيض %</label><input type="number" min="1" max="90" class="ltr" id="discPct" placeholder="20" value="${s.discountPercent ?? ''}"></div></div>`);
+  p.append(dc);
+  bindInput($('#discOn'), content.settings, 'discountEnabled');
+  bindInput($('#discPct'), content.settings, 'discountPercent', true);
   const rv = el(`<div class="card stack" style="margin-top:12px"><h2>تقييمات Google</h2><p class="hint">الشارة في أعلى الصفحة. اتركها فارغة لإخفاء الرقم. لتعديل العناوين افتح تبويب النصوص › تقييمات Google.</p><div class="grid">
     <div><label>التقييم (مثال 4.9)</label><input type="number" step="0.1" min="0" max="5" class="ltr" data-s="googleRating" value="${s.googleRating ?? ''}"></div>
     <div><label>عدد التقييمات</label><input type="number" min="0" class="ltr" data-s="googleCount" value="${s.googleCount ?? ''}"></div></div>
@@ -362,3 +368,4 @@ renderGate();
 </script>
 </body>
 </html>
+
