@@ -1,6 +1,8 @@
 {
  "contact": {
-  "instagram": "https://www.instagram.com/kaoukiquads?obrf=OWdhOHJoYnZud3c2"
+  "instagram": "https://www.instagram.com/kaoukiquads?obrf=OWdhOHJoYnZud3c2",
+  "open": "08:00",
+  "close": "20:00"
  },
  "settings": {
   "discountEnabled": true,
